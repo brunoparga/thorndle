@@ -1,0 +1,571 @@
+/* ---------------------------------------------------------------- theme --- */
+
+:root {
+  color-scheme: light;
+
+  --bg: #fbfaf7;
+  --surface: #f2efe8;
+  --fg: #1b1a17;
+  --muted: #6b6862;
+  --rule: #ded8cc;
+
+  --tile-edge: #d3cec4;        /* empty tile */
+  --tile-edge-filled: #948e82; /* typed, not yet judged */
+
+  --key-bg: #d7d2c8;           /* untried */
+  --key-fg: #1b1a17;
+  --key-press: #c4beb1;
+
+  --absent-bg: #16150f;
+  --absent-edge: #16150f;
+  --absent-fg: #efece4;
+  --present-bg: #a17f1a;
+  --present-fg: #ffffff;
+  --correct-bg: #3a7d44;
+  --correct-fg: #ffffff;
+
+  /* Thorn and edh keep this ring in every state, so "special" never reads as
+     a score. It is chosen to stay visible on grey, black, gold and green. */
+  --special: #7c3aed;
+  --special-ink: #6d28d9;
+
+  --radius: 5px;
+  --gap: clamp(3px, 0.9vmin, 6px);
+}
+
+/* The dark palette lives here as plain values; the two blocks below decide
+   when it is switched on -- by the system, or by an explicit choice. */
+:root {
+  --dark-bg: #14130f;
+  --dark-surface: #1e1c17;
+  --dark-fg: #f2f0ea;
+  --dark-muted: #9d988c;
+  --dark-rule: #34312a;
+  --dark-tile-edge: #3b382f;
+  --dark-tile-edge-filled: #6d685c;
+  --dark-key-bg: #56514a;
+  --dark-key-fg: #f2f0ea;
+  --dark-key-press: #6b665d;
+  --dark-absent-bg: #08080a;
+  --dark-absent-fg: #8f8a80;
+  --dark-present-bg: #cba233;
+  --dark-present-fg: #17150c;
+  --dark-correct-bg: #4b9552;
+  --dark-correct-fg: #0f1a10;
+  --dark-special: #b79bff;
+  --dark-special-ink: #c4b0ff;
+}
+
+:root[data-theme="dark"] { color-scheme: dark; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { color-scheme: dark; }
+}
+
+/* One assignment block per theme trigger, so the tokens above stay the single
+   source of truth for what dark mode actually looks like. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--dark-bg); --surface: var(--dark-surface); --fg: var(--dark-fg);
+    --muted: var(--dark-muted); --rule: var(--dark-rule);
+    --tile-edge: var(--dark-tile-edge); --tile-edge-filled: var(--dark-tile-edge-filled);
+    --key-bg: var(--dark-key-bg); --key-fg: var(--dark-key-fg); --key-press: var(--dark-key-press);
+    --absent-bg: var(--dark-absent-bg); --absent-fg: var(--dark-absent-fg);
+    --absent-edge: #2b2822;
+    --present-bg: var(--dark-present-bg); --present-fg: var(--dark-present-fg);
+    --correct-bg: var(--dark-correct-bg); --correct-fg: var(--dark-correct-fg);
+    --special: var(--dark-special); --special-ink: var(--dark-special-ink);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: var(--dark-bg); --surface: var(--dark-surface); --fg: var(--dark-fg);
+  --muted: var(--dark-muted); --rule: var(--dark-rule);
+  --tile-edge: var(--dark-tile-edge); --tile-edge-filled: var(--dark-tile-edge-filled);
+  --key-bg: var(--dark-key-bg); --key-fg: var(--dark-key-fg); --key-press: var(--dark-key-press);
+  --absent-bg: var(--dark-absent-bg); --absent-fg: var(--dark-absent-fg);
+  --absent-edge: #2b2822;
+  --present-bg: var(--dark-present-bg); --present-fg: var(--dark-present-fg);
+  --correct-bg: var(--dark-correct-bg); --correct-fg: var(--dark-correct-fg);
+  --special: var(--dark-special); --special-ink: var(--dark-special-ink);
+}
+
+/* ----------------------------------------------------------------- base --- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.2vmin, 14px);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+:where(button):focus-visible,
+:where(summary):focus-visible {
+  outline: 2px solid var(--special);
+  outline-offset: 2px;
+}
+
+/* Thorn and edh, wherever they appear in prose. */
+.special { color: var(--special-ink); }
+
+/* --------------------------------------------------------------- topbar --- */
+
+.topbar {
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(6px, 1.4vmin, 12px) 12px;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.35rem, 5.5vmin, 1.9rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em; /* balance the tracking on the last letter */
+}
+
+.icon-button {
+  width: 2.2rem; height: 2.2rem;
+  display: grid; place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.icon-button:hover { color: var(--fg); border-color: var(--tile-edge-filled); }
+#theme-button { font-size: 1.05rem; line-height: 1; }
+
+/* ----------------------------------------------------------- shibboleth --- */
+
+.shibboleth {
+  width: 100%;
+  max-width: 560px;
+  padding: 0 12px;
+  text-align: center;
+}
+
+.shibboleth__line {
+  margin: 0;
+  font-size: clamp(1rem, 4.2vmin, 1.25rem);
+  font-style: italic;
+}
+
+/* Each "th" in the sentence is doing a different job; the underline says which. */
+.th { border-bottom: 2px solid currentColor; padding-bottom: 1px; }
+.th--thorn, .th--edh { color: var(--special-ink); font-style: normal; font-weight: 700; }
+.th--tee { color: var(--muted); border-bottom-style: dotted; }
+.th--split { color: var(--muted); border-bottom-style: dashed; }
+
+.shibboleth__key {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px clamp(8px, 2.5vmin, 18px);
+  font-size: clamp(0.68rem, 2.7vmin, 0.8rem);
+  color: var(--muted);
+}
+
+.shibboleth__key b { font-weight: 700; }
+.shibboleth__key .is-letter b { color: var(--special-ink); }
+
+/* ---------------------------------------------------------------- board --- */
+
+.board-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  gap: var(--gap);
+  aspect-ratio: 5 / 7;
+  width: auto;
+  height: 100%;
+  max-height: min(64vh, 460px);
+  max-width: min(100%, 330px);
+  /* Opening "How to play" should push the page into a scroll, not flatten the
+     board into a strip. */
+  min-height: 210px;
+}
+
+@supports (container-type: size) {
+  .board { container-type: size; }
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--tile-edge);
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: clamp(1.3rem, 6.5vmin, 2rem);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+@supports (container-type: size) {
+  .tile { font-size: min(11cqw, 15cqh); }
+}
+
+.tile[data-state="typed"] { border-color: var(--tile-edge-filled); }
+.tile[data-state="absent"]  { background: var(--absent-bg);  border-color: var(--absent-edge); color: var(--absent-fg); }
+.tile[data-state="present"] { background: var(--present-bg); border-color: var(--present-bg); color: var(--present-fg); }
+.tile[data-state="correct"] { background: var(--correct-bg); border-color: var(--correct-bg); color: var(--correct-fg); }
+
+/* -------------------------------------------------------------- primer --- */
+
+.primer {
+  width: 100%;
+  max-width: 560px;
+  padding: 0 12px;
+}
+
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px clamp(10px, 3vmin, 22px);
+  justify-content: center;
+}
+
+.letter-card {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: clamp(0.72rem, 2.9vmin, 0.85rem);
+  color: var(--muted);
+}
+
+.letter-card__glyph {
+  font-size: clamp(1rem, 4vmin, 1.2rem);
+  font-weight: 700;
+}
+
+.letter-card__name {
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+}
+
+.letter-card__gloss b { color: var(--fg); font-weight: 700; }
+
+.how {
+  margin-top: 6px;
+  border-top: 1px solid var(--rule);
+  font-size: clamp(0.75rem, 3vmin, 0.88rem);
+  color: var(--muted);
+}
+
+.how > summary {
+  padding: 5px 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+}
+
+.how > summary:hover { color: var(--fg); }
+.how__body { padding-bottom: 8px; }
+.how__body p { margin: 0 0 0.7em; }
+:where(.how__body) b:where(:not(.swatch, .special)) { color: var(--fg); }
+
+/*
+  The swatches name their own colour, so unlike the tiles they are small text
+  and have to clear 4.5:1. Gold is a light background in both themes and always
+  takes dark ink; the other two follow the tile foregrounds, which already flip.
+*/
+.swatch {
+  padding: 0 5px;
+  border-radius: 3px;
+}
+
+.swatch--correct { background: var(--correct-bg); color: var(--correct-fg); }
+.swatch--present { background: var(--present-bg); color: #17150c; }
+.swatch--absent  { background: var(--absent-bg);  color: var(--absent-fg); }
+
+kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------- keyboard --- */
+
+.keyboard {
+  width: 100%;
+  max-width: 520px;
+  padding: 4px 6px clamp(6px, 1.6vmin, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1.1vmin, 7px);
+}
+
+.keyboard__row {
+  display: flex;
+  gap: clamp(3px, 1vmin, 6px);
+}
+
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: clamp(38px, 6.6vh, 54px);
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--key-bg);
+  color: var(--key-fg);
+  font-family: inherit;
+  font-size: clamp(0.8rem, 3.4vmin, 1.05rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.key--wide { flex: 1.6 1 0; font-size: clamp(0.6rem, 2.4vmin, 0.75rem); letter-spacing: 0.04em; }
+.key:active { background: var(--key-press); }
+.key[data-state="absent"]  { background: var(--absent-bg);  color: var(--absent-fg); }
+.key[data-state="present"] { background: var(--present-bg); color: var(--present-fg); }
+.key[data-state="correct"] { background: var(--correct-bg); color: var(--correct-fg); }
+
+/*
+  The special mark. An inset ring survives every background a key can take --
+  grey, black, gold, green -- and because no scored state ever draws a ring, it
+  reads as a property of the letter rather than as a fifth score.
+*/
+.key--special, .tile--special {
+  box-shadow: inset 0 0 0 3px var(--special);
+}
+
+/* ---------------------------------------------------------------- toast --- */
+
+.toast-rail {
+  position: fixed;
+  top: 12%;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.toast {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  animation: toast-out 1.6s forwards;
+}
+
+@keyframes toast-out {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- sheet --- */
+
+.sheet {
+  width: min(92vw, 380px);
+  padding: 22px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  text-align: center;
+}
+
+.sheet::backdrop { background: rgb(0 0 0 / 0.5); }
+
+.sheet__close {
+  position: absolute;
+  top: 8px; right: 10px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sheet__title { margin: 0 0 4px; font-size: 1.3rem; }
+.sheet__number { color: var(--muted); font-weight: 400; }
+
+.sheet__answer {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  color: var(--muted);
+}
+
+.sheet__answer b {
+  color: var(--fg);
+  font-size: 1.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stats {
+  margin: 0 0 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.stats div { display: contents; }
+.stats dt { grid-row: 2; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stats dd { grid-row: 1; margin: 0; font-size: 1.5rem; font-weight: 700; }
+
+.distribution {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 6px;
+  margin-bottom: 16px;
+  font-size: 0.78rem;
+}
+
+.distribution__bar {
+  justify-self: start;
+  min-width: 1.4em;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--tile-edge);
+  color: var(--fg);
+  text-align: right;
+  font-weight: 700;
+}
+
+.distribution__bar--current { background: var(--correct-bg); color: var(--correct-fg); }
+
+.sheet__countdown { margin: 0 0 14px; font-size: 0.8rem; color: var(--muted); }
+.sheet__countdown span { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--fg); }
+
+.share-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--correct-bg);
+  color: var(--correct-fg);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ colophon --- */
+
+.colophon {
+  max-width: 460px;
+  padding: 0 16px 10px;
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.colophon p { margin: 0; }
+
+/*
+  The board is the only part of the page that can usefully absorb spare height,
+  so as the viewport gets shorter the prose around it gives way in order of how
+  little it is missed.
+*/
+@media (max-height: 900px) {
+  .colophon { display: none; }
+}
+
+@media (max-height: 700px) {
+  .letter-card__gloss { display: none; }
+}
+
+@media (max-height: 620px) {
+  .shibboleth__key { display: none; }
+  .how { display: none; }
+}
+
+/* ----------------------------------------------------------- animation --- */
+
+.tile--pop { animation: pop 100ms ease-out; }
+.tile--flip { animation: flip 520ms ease forwards; }
+.row--shake { animation: shake 480ms ease; }
+.tile--win { animation: win 520ms ease; }
+
+@keyframes pop { 50% { scale: 1.08; } }
+
+@keyframes flip {
+  0%   { rotate: x 0deg; }
+  49%  { rotate: x 90deg; }
+  50%  { rotate: x 90deg; }
+  100% { rotate: x 0deg; }
+}
+
+@keyframes shake {
+  10%, 90% { translate: -2px 0; }
+  20%, 80% { translate: 4px 0; }
+  30%, 50%, 70% { translate: -7px 0; }
+  40%, 60% { translate: 7px 0; }
+}
+
+@keyframes win {
+  30% { translate: 0 -22%; }
+  60% { translate: 0 4%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile--pop, .tile--flip, .row--shake, .tile--win, .toast { animation: none; }
+  .toast { opacity: 1; }
+}
