@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 // Builds src/words.js -- the Thorndle dictionary and the daily answer schedule.
 //
-// The twist: every English <th> pronounced /θ/ or /ð/ collapses into a single
+// The twist: an English <th> pronounced /θ/ or /ð/ collapses into a single
 // letter -- thorn (þ) for unvoiced /θ/, edh (ð) for voiced /ð/. THORN becomes
 // ÞORN and drops out at four letters; THORNS becomes ÞORNS and joins the game.
-// Six-letter English words are the new supply, and the letter pair "th" can
-// never appear in a Thorndle word: it is always one letter or nothing.
+// Six-letter English words are the new supply.
+//
+// A <th> that is *not* one of those two sounds is not a digraph at all, and
+// stays two ordinary letters: THYME is /taɪm/ with a silent h, so it is spelled
+// t-h-y-m-e and plays at its full five letters. POTHOLE is t + h across a seam,
+// ANTHONY is a plain /t/. So t followed by h is a legal spelling here, and
+// typing it is a claim about pronunciation.
 //
 // Voicing comes from CMUdict, which distinguishes the phonemes TH (/θ/) and
-// DH (/ð/). A word is usable only if its spelling and its pronunciation agree
-// on how many /θ~ð/ sounds it has. That one check discards every word where
-// <th> is not a single sound -- POTHOLE (t + h), THYME (plain /t/), ISTHMUS
-// (silent) -- with no need to special-case them.
+// DH (/ð/). Each <th> in a word either has a /θ~ð/ phoneme to answer to or it
+// does not, and words where only some of them do cannot be aligned reliably,
+// so those are dropped.
 //
 // Inputs (set THORNDLE_DATA to the directory holding the downloads):
 //   cmudict.dict    https://github.com/cmusphinx/cmudict
@@ -30,15 +34,36 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const THORN = 'þ'; // unvoiced /θ/ -- CMUdict TH
 const EDH = 'ð';   // voiced   /ð/ -- CMUdict DH
 
-// Derivable but wrong: EIGHTH is EIGHT + H, so collapsing <th> eats the /t/.
-// THITHER is contested at both of its <th>s and too rare to be worth the fight.
-const BLACKLIST = new Set(['eighth', 'eighths', 'thither']);
+/**
+ * Voicing settled by hand, overriding CMUdict: the /θ~ð/ sounds a word has, in
+ * order -- TH for thorn, DH for edh, and an empty reading for a <th> that is no
+ * sound at all.
+ *
+ * A word may list more than one reading. Then every reading is playable as a
+ * guess, but the word can never be the answer of the day, because nothing in
+ * the puzzle would tell you which was meant.
+ */
+const VOICING = new Map([
+  // CMUdict is plainly wrong here: THYME is /taɪm/, a plain t and a silent h.
+  ['thyme', [[]]],
 
-// Words where educated speakers genuinely differ about the voicing, beyond the
-// variants CMUdict happens to record -- the -THS plurals are the usual
-// offenders. Both spellings stay playable as guesses, but neither can be the
-// answer, because nothing in the puzzle would tell you which was meant.
-const VOICING_VARIES = new Set(['truths', 'booths', 'cloths', 'berths', 'mouthy']);
+  // The -THS plurals split real speakers straight down the middle.
+  ['truths', [['TH'], ['DH']]],
+  ['booths', [['TH'], ['DH']]],
+  ['cloths', [['TH'], ['DH']]],
+  ['berths', [['TH'], ['DH']]],
+
+  // MOUTHED is plainly edh; MOUTHY does not obviously follow it.
+  ['mouthy', [['TH'], ['DH']]],
+
+  // THITHER varies in its first th only -- /ˈðɪðər/ or /ˈθɪðər/. The second is
+  // voiced for everyone, so ÐIÞER and ÞIÞER are not spellings of anything.
+  ['thither', [['DH', 'DH'], ['TH', 'DH']]],
+]);
+
+// Below the frequency floor, but kept as answers anyway on their merits as
+// puzzles: SEEÐE for its three E's, DIÐER because it is a good word.
+const KEEP_AS_ANSWER = new Set(['seethe', 'dither']);
 
 // Real words the system dictionaries only list capitalised, or not at all.
 const EXTRA = ['gothic', 'themed', 'mouthy', 'thusly', 'empath', 'thingy', 'methyl'];
@@ -102,22 +127,29 @@ function thPositions(word) {
 }
 
 /**
- * Collapse a word's <th> digraphs into thorn/edh. Returns one spelling per
- * distinct voicing CMUdict attests -- two means the word is genuinely
- * ambiguous (BOOTHS is /buːðz/ or /buːθs/) -- or null when spelling and
- * pronunciation disagree about how many /θ~ð/ sounds there are.
+ * Spell a word in the game's alphabet. Returns one spelling per distinct
+ * voicing CMUdict attests -- two means the word is genuinely ambiguous, as
+ * BOOTHS is /buːðz/ or /buːθs/ -- or null when the word cannot be spelled at
+ * all.
+ *
+ * Three outcomes, decided by counting: if the word has as many /θ~ð/ phonemes
+ * as it has <th> spellings, every <th> is one of the new letters; if it has
+ * none, every <th> stays two ordinary letters (THYME, POTHOLE, ISTHMUS); and
+ * anything in between -- some <th> a sound and some not, or a /θ~ð/ spelled
+ * some other way -- cannot be aligned, so the word is dropped.
  */
 function transform(word, pronunciations) {
   const positions = thPositions(word);
 
-  const patterns = new Set();
-  for (const phones of pronunciations) {
-    const voicing = phones.filter((p) => p === 'TH' || p === 'DH');
-    if (voicing.length !== positions.length) return null; // spelling/sound mismatch
-    patterns.add(voicing.join(' '));
-  }
+  const decided = VOICING.get(word);
+  const patterns = decided
+    ? new Set(decided.map((reading) => reading.join(' ')))
+    : new Set(pronunciations.map((phones) => phones.filter((p) => p === 'TH' || p === 'DH').join(' ')));
   if (!patterns.size) return null;
-  if (!positions.length) return [word]; // ordinary word, nothing to collapse
+
+  const sounds = [...patterns].map((p) => (p ? p.split(' ').length : 0));
+  if (sounds.every((n) => n === 0)) return [word]; // no /θ~ð/: nothing to collapse
+  if (sounds.some((n) => n !== positions.length)) return null; // cannot align
 
   return [...patterns].map((pattern) => {
     const voicing = pattern.split(' ');
@@ -154,61 +186,67 @@ const record = (form, source, ambiguous) => {
   if (!existing || existing.freq < f) words.set(form, { freq: f, source, ambiguous });
 };
 
-// Words that lose letters to the collapse have to come from a real dictionary,
-// since this is where six-letter words -- and every þ/ð word -- enter.
-for (const source of dictionary) {
-  if (BLACKLIST.has(source) || source.length < 5 || source.length > 8) continue;
+/**
+ * Record every playable spelling of one source word, if it has any.
+ *
+ * `needsPronunciation` is what separates the two corpora. Words that change
+ * length have to come from a real dictionary and a real pronunciation, since
+ * that is where six-letter words -- and every þ/ð word -- enter. Plain Wordle
+ * guesses are allowed through unexamined, because a word with no <th> in it
+ * has nothing for this game to get wrong.
+ */
+function consider(source, { needsPronunciation }) {
+  if (source.length < 5 || source.length > 8) return;
   const pronunciation = prons.get(source);
-  if (!pronunciation) continue;
-  const forms = transform(source, pronunciation);
-  if (!forms) continue;
 
-  if (VOICING_VARIES.has(source)) {
-    const at = thPositions(source);
-    if (at.length !== 1) throw new Error(`${source}: VOICING_VARIES expects a single th`);
-    const stem = source.slice(0, at[0]);
-    const tail = source.slice(at[0] + 2);
-    for (const letter of [THORN, EDH]) record(stem + letter + tail, source, true);
-    continue;
+  if (!pronunciation && !VOICING.has(source)) {
+    // With no pronunciation there is no telling thorn from edh from a plain t + h.
+    if (needsPronunciation || thPositions(source).length) return;
+    record(source, source, false);
+    return;
   }
 
+  const forms = transform(source, pronunciation ?? []);
+  if (!forms) return;
   for (const form of forms) record(form, source, forms.length > 1);
 }
 
-// Every ordinary Wordle guess still counts, whether or not CMUdict knows it.
-// It only has to be free of <th>, and free of any /θ~ð/ CMUdict hears in it.
-for (const source of wordleWords) {
-  if (BLACKLIST.has(source) || thPositions(source).length) continue;
-  const pronunciation = prons.get(source);
-  if (pronunciation && !transform(source, pronunciation)) continue;
-  record(source, source, false);
-}
+for (const source of dictionary) consider(source, { needsPronunciation: true });
+for (const source of wordleWords) consider(source, { needsPronunciation: false });
 
-// Invariant: "th" is never two letters in this game.
-for (const word of words.keys()) {
-  if (word.includes('th')) throw new Error(`"${word}" still spells th as two letters`);
+// Invariant: expanding þ and ð back to "th" must give the English word again.
+// This is what catches a misaligned collapse, and it holds for the words that
+// keep a literal <th> too, since nothing was collapsed in them.
+for (const [form, { source, ambiguous }] of words) {
+  const expanded = [...form].map((c) => (c === THORN || c === EDH ? 'th' : c)).join('');
+  if (!ambiguous && expanded !== source) {
+    throw new Error(`"${form}" expands to "${expanded}", not "${source}"`);
+  }
 }
 
 // ---------------------------------------------------------- answer pools ---
 
+/** Words that make the player decide what a th is: þ, ð, or two plain letters. */
+const teaches = (word) => word.includes(THORN) || word.includes(EDH) || word.includes('th');
+
 const eligible = (word, entry, minFreq) =>
   !entry.ambiguous &&
-  entry.freq >= minFreq &&
+  (entry.freq >= minFreq || KEEP_AS_ANSWER.has(entry.source)) &&
   !NOT_AN_ANSWER.test(word) &&
   dictionary.has(entry.source);
 
 const byFrequency = (a, b) => b[1].freq - a[1].freq || a[0].localeCompare(b[0]);
 const entries = [...words.entries()];
 
-// Take every þ/ð word that is not vanishingly rare -- there are only so many.
+// Take every th word that is not vanishingly rare -- there are only so many.
 const special = entries
-  .filter(([w, e]) => isSpecial(w) && eligible(w, e, 100))
+  .filter(([w, e]) => teaches(w) && eligible(w, e, 100))
   .sort(byFrequency)
   .map(([w]) => w);
 
 // Ordinary answers are the most common plain words, sized to hit the ratio.
 const ordinary = entries
-  .filter(([w, e]) => !isSpecial(w) && wordleWords.has(w) && eligible(w, e, 1000))
+  .filter(([w, e]) => !teaches(w) && wordleWords.has(w) && eligible(w, e, 1000))
   .sort(byFrequency)
   .slice(0, special.length * (ANSWERS_PER_SPECIAL - 1))
   .map(([w]) => w);
@@ -249,8 +287,8 @@ const all = [...words.keys()].sort();
 const file = `// Generated by tools/build-words.mjs -- do not edit by hand.
 //
 // Every word is five letters, where þ (thorn, unvoiced /θ/) and ð (edh, voiced
-// /ð/) each count as one letter. "th" never appears: it is always one of those
-// two, or -- as in THYME or POTHOLE -- a word this game cannot spell.
+// /ð/) each count as one letter. A "th" that is neither of those sounds is not
+// a digraph at all and stays two letters, as in THYME.
 
 /** Every word Thorndle accepts as a guess. */
 export const GUESSES = ${JSON.stringify([...all].join(' '))}.split(' ');
@@ -263,9 +301,10 @@ export const EPOCH = '${EPOCH}';
 `;
 writeFileSync(join(ROOT, 'src', 'words.js'), file);
 
-const specialCount = all.filter(isSpecial).length;
-console.log(`guesses  ${all.length} (${specialCount} with þ/ð)`);
-console.log(`answers  ${schedule.length} (${schedule.filter(isSpecial).length} with þ/ð, ` +
-            `${(schedule.filter(isSpecial).length / schedule.length * 100).toFixed(0)}%) ` +
+const literal = all.filter((w) => w.includes('th'));
+console.log(`guesses  ${all.length} (${all.filter(isSpecial).length} with þ/ð, ` +
+            `${literal.length} with a literal th: ${literal.join(' ')})`);
+console.log(`answers  ${schedule.length} (${schedule.filter(teaches).length} about th, ` +
+            `${(schedule.filter(teaches).length / schedule.length * 100).toFixed(0)}%) ` +
             `-- ${(schedule.length / 365).toFixed(1)} years from ${EPOCH}`);
 console.log(`first week: ${schedule.slice(0, 7).join(' ')}`);

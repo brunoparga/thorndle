@@ -29,6 +29,11 @@
   --special: #7c3aed;
   --special-ink: #6d28d9;
 
+  /* Two violets for the marked letters, picked by what sits behind them: the
+     pale one on near-black, the deep one on grey, gold and green. */
+  --violet-pale: #c9b3ff;
+  --violet-deep: #250645;
+
   --radius: 5px;
   --gap: clamp(3px, 0.9vmin, 6px);
 }
@@ -203,6 +208,22 @@ body {
 
 /* ---------------------------------------------------------------- board --- */
 
+/*
+  Board plus letter key. It is a positioning context so that "How to play" can
+  cover exactly this much of the page and no more -- never the keyboard, and
+  never the sentence above.
+*/
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.2vmin, 14px);
+}
+
 .board-area {
   flex: 1 1 auto;
   min-height: 0;
@@ -289,23 +310,112 @@ body {
 
 .letter-card__gloss b { color: var(--fg); font-weight: 700; }
 
-.how {
-  margin-top: 6px;
-  border-top: 1px solid var(--rule);
-  font-size: clamp(0.75rem, 3vmin, 0.88rem);
+/*
+  The brackets are the only way to type þ and ð on an ordinary keyboard, so the
+  hint stays in the open rather than inside "How to play". It is stated
+  unconditionally: a media query for a physical keyboard would be a guess, and
+  guessing wrong hides the one thing a desktop player needs to know.
+*/
+.letters__hint {
+  margin: 0;
+  flex-basis: 100%;   /* always its own centred line, never crowding a card */
+  text-align: center;
+  font-size: clamp(0.72rem, 2.9vmin, 0.85rem);
   color: var(--muted);
+  white-space: nowrap;
 }
 
-.how > summary {
+.letters__hint b { font-weight: 700; }
+
+.how-toggle {
+  width: 100%;
+  margin-top: 6px;
   padding: 5px 0;
-  cursor: pointer;
+  border: none;
+  border-top: 1px solid var(--rule);
+  background: none;
   color: var(--muted);
+  font: inherit;
+  font-size: clamp(0.75rem, 3vmin, 0.88rem);
   font-variant: small-caps;
   letter-spacing: 0.06em;
+  text-align: left;
+  cursor: pointer;
 }
 
-.how > summary:hover { color: var(--fg); }
-.how__body { padding-bottom: 8px; }
+.how-toggle:hover { color: var(--fg); }
+.how-toggle__mark { font-size: 0.7em; }
+
+/*
+  The sheet. It is laid over the stage instead of being part of the column, so
+  reading the rules costs the board no height -- opening it used to squeeze
+  seven rows of tiles into a strip.
+*/
+.how {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: min(100%, 560px);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--rule);
+  border-radius: 10px 10px 0 0;
+  background: var(--bg);
+  box-shadow: 0 -10px 30px rgb(0 0 0 / 0.22);
+  font-size: clamp(0.75rem, 3vmin, 0.88rem);
+  color: var(--muted);
+
+  visibility: hidden;
+  opacity: 0;
+  translate: 0 40px;
+  transition: translate 260ms ease, opacity 200ms ease, visibility 0s 260ms;
+}
+
+.stage[data-how="open"] .how {
+  visibility: visible;
+  opacity: 1;
+  translate: 0 0;
+  transition: translate 260ms ease, opacity 200ms ease, visibility 0s;
+}
+
+/* The close button stays reachable however far the text is scrolled. */
+.how__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0 6px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule);
+}
+
+.how__title {
+  margin: 0;
+  font-size: 1em;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+}
+
+.how__close {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.how__close:hover { color: var(--fg); }
+.how__body { padding-top: 10px; }
 .how__body p { margin: 0 0 0.7em; }
 :where(.how__body) b:where(:not(.swatch, .special)) { color: var(--fg); }
 
@@ -376,13 +486,30 @@ kbd {
 .key[data-state="correct"] { background: var(--correct-bg); color: var(--correct-fg); }
 
 /*
-  The special mark. An inset ring survives every background a key can take --
-  grey, black, gold, green -- and because no scored state ever draws a ring, it
-  reads as a property of the letter rather than as a fifth score.
+  The special mark: thorn and edh are violet themselves, ring and letter alike,
+  in every state. Only the shade moves, because one violet cannot be read on
+  both a near-black key and a gold one -- so the mark takes the pale violet on
+  dark grounds and the deep violet on light ones. No scored state draws a ring,
+  so the mark still reads as a property of the letter and not a fifth score.
 */
-.key--special, .tile--special {
-  box-shadow: inset 0 0 0 3px var(--special);
+.key--special,
+.tile--special {
+  --mark: var(--special-ink);
+  color: var(--mark);
+  box-shadow: inset 0 0 0 3px var(--mark);
 }
+
+/* Stated again at the specificity of the state rules, which also set a colour. */
+.key--special[data-state],
+.tile--special[data-state] { color: var(--mark); }
+
+.key--special[data-state="absent"],
+.tile--special[data-state="absent"] { --mark: var(--violet-pale); }
+
+.key--special[data-state="present"],
+.key--special[data-state="correct"],
+.tile--special[data-state="present"],
+.tile--special[data-state="correct"] { --mark: var(--violet-deep); }
 
 /* ---------------------------------------------------------------- toast --- */
 
@@ -530,11 +657,12 @@ kbd {
 
 @media (max-height: 700px) {
   .letter-card__gloss { display: none; }
+  /* Without their glosses the cards are short enough to share a line again. */
+  .letters__hint { flex-basis: auto; }
 }
 
 @media (max-height: 620px) {
   .shibboleth__key { display: none; }
-  .how { display: none; }
 }
 
 /* ----------------------------------------------------------- animation --- */

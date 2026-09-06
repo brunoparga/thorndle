@@ -33,6 +33,12 @@
   <ul class="shibboleth__key" id="shibboleth-key"></ul>
 </section>
 
+<!--
+  The stage is the board plus the letter key, and it is what "How to play"
+  covers: the sheet rises over it rather than pushing it out of the way.
+-->
+<div class="stage" id="stage">
+
 <main class="board-area">
   <div class="board" id="board" role="grid" aria-label="Guesses"></div>
 </main>
@@ -49,11 +55,23 @@
       <span class="letter-card__name">edh</span>
       <span class="letter-card__gloss">the voiced th of <b>this</b> and <b>father</b> — /ð/</span>
     </div>
+    <p class="letters__hint">
+      Type <kbd>[</kbd> for <b class="special">þ</b>, <kbd>]</kbd> for <b class="special">ð</b>
+    </p>
   </div>
 
-  <details class="how" id="how">
-    <summary>How to play</summary>
-    <div class="how__body">
+  <button class="how-toggle" id="how-toggle" type="button"
+          aria-expanded="false" aria-controls="how-panel">
+    <span class="how-toggle__mark" aria-hidden="true">▲</span> How to play
+  </button>
+</section>
+
+<div class="how" id="how-panel" role="region" aria-label="How to play">
+  <div class="how__head">
+    <h2 class="how__title">How to play</h2>
+    <button class="how__close" id="how-close" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="how__body">
       <p>
         Guess the five-letter word in seven tries. After each guess the tiles
         change colour: <b class="swatch swatch--correct">green</b> for the right
@@ -67,9 +85,7 @@
         <i>th</i> that is really one sound, Þorndle writes one tile. So
         <i>worth</i> is WORÞ and too short to play, while <i>months</i> is
         MONÞS and fits perfectly — six-letter words are where most of the
-        good ones come from. A word is never spelled with <i>t</i> followed by
-        <i>h</i>: it is one of the two new letters, or it is a word like
-        <i>thyme</i> and <i>pothole</i> that this alphabet cannot write.
+        good ones come from.
       </p>
       <p>
         Which of the two you need is a matter of sound, not spelling. Say the
@@ -77,13 +93,23 @@
         (<i>mother</i>, <i>rather</i>, <i>smooth</i>); if it is a plain hiss, it
         is <b class="special">þ</b> (<i>thanks</i>, <i>health</i>, <i>throat</i>).
       </p>
+      <p>
+        <b>And a <i>th</i> that is neither is not a digraph at all</b>, so it
+        keeps both its letters. <i>Thyme</i> is said /taɪm/ — a plain <i>t</i>
+        with a silent <i>h</i> — and so it is spelled with five tiles,
+        <b>t·h·y·m·e</b>, and plays. Same for the <i>t</i> and <i>h</i> that
+        merely meet across a seam, as in <i>pothole</i>. Putting <i>t</i> next
+        to <i>h</i> is a claim about pronunciation, and now and then it is the
+        right one.
+      </p>
       <p class="how__keys">
         On a physical keyboard, type <kbd>[</kbd> for <b class="special">þ</b>
-        and <kbd>]</kbd> for <b class="special">ð</b>.
-      </p>
-    </div>
-  </details>
-</section>
+      and <kbd>]</kbd> for <b class="special">ð</b>.
+    </p>
+  </div>
+</div>
+
+</div><!-- /stage -->
 
 <div class="keyboard" id="keyboard" role="group" aria-label="Keyboard"></div>
 
@@ -102,7 +128,8 @@
 <footer class="colophon">
   <p>
     A daily puzzle. Words come from CMUdict, which is why the game knows
-    <i>smooth</i> buzzes and <i>booth</i> does not.
+    <i>smooth</i> buzzes and <i>booth</i> does not — and from a short list of
+    corrections, because it thinks <i>thyme</i> has a th sound in it.
   </p>
 </footer>
 

@@ -11,13 +11,13 @@ const STORAGE_KEY = 'thorndle.v1';
 const GUESS_SET = new Set(GUESSES);
 
 /*
-  Thorn sits in the middle row between G and H, edh in the top row between Y
-  and U -- roughly where each one lands in a word, and out of the way of the
-  letters people reach for first.
+  Edh goes in the top row between T and Y, thorn in the middle row between F
+  and G. Each row grows by one key rather than displacing anything, so the rest
+  of QWERTY stays where the fingers expect it.
 */
 const KEY_ROWS = [
-  ['q', 'w', 'e', 'r', 't', 'y', EDH, 'u', 'i', 'o', 'p'],
-  ['a', 's', 'd', 'f', 'g', THORN, 'h', 'j', 'k', 'l'],
+  ['q', 'w', 'e', 'r', 't', EDH, 'y', 'u', 'i', 'o', 'p'],
+  ['a', 's', 'd', 'f', THORN, 'g', 'h', 'j', 'k', 'l'],
   ['enter', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'back'],
 ];
 
@@ -38,8 +38,8 @@ const SHIBBOLETHS = [
 const KIND_LABELS = {
   edh: EDH,
   thorn: THORN,
-  tee: 't',
-  split: 't + h',
+  tee: 'th',   // Anthony: a plain /t/ with a silent h
+  split: 'th', // potholes: t and h meeting across a seam
 };
 
 const isSpecial = (letter) => letter === THORN || letter === EDH;
@@ -298,7 +298,7 @@ function submit() {
 
   if (!GUESS_SET.has(guess)) {
     tiles[row].forEach((tile) => animate(tile, 'row--shake', 500));
-    toast(/th/.test(guess) ? 'No word here spells th' : 'Not in word list');
+    toast('Not in word list');
     return;
   }
 
@@ -448,6 +448,7 @@ function sourceNote(word) {
 // ----------------------------------------------------------------- input ---
 
 function press(key) {
+  if (howIsOpen()) setHow(false); // playing dismisses the rules
   // Once the day is over the board is a button that reopens the result.
   if (game.status !== 'playing' && key === 'enter') showResult();
   else if (key === 'enter') submit();
@@ -466,6 +467,10 @@ keyboardEl.addEventListener('click', (event) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
+  if (event.key === 'Escape' && howIsOpen()) {
+    setHow(false);
+    return;
+  }
   if (sheet.open) return;
 
   const key = event.key;
@@ -520,10 +525,39 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (!theme) applyTheme(null);
 });
 
-document.getElementById('help-button').addEventListener('click', () => {
-  const how = document.getElementById('how');
-  how.open = !how.open;
-  if (how.open) how.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+// ---------------------------------------------------------- how to play ---
+
+const stage = document.getElementById('stage');
+const howToggle = document.getElementById('how-toggle');
+const howPanel = document.getElementById('how-panel');
+const howClose = document.getElementById('how-close');
+
+const howIsOpen = () => stage.dataset.how === 'open';
+
+function setHow(open) {
+  if (open) stage.dataset.how = 'open';
+  else delete stage.dataset.how;
+  howToggle.setAttribute('aria-expanded', String(open));
+
+  if (open) {
+    howPanel.scrollTop = 0;
+    howClose.focus({ preventScroll: true });
+  } else if (howPanel.contains(document.activeElement)) {
+    // Only take focus back if the sheet still had it; a click elsewhere on the
+    // page has already put it where the player wanted it.
+    howToggle.focus({ preventScroll: true });
+  }
+}
+
+howToggle.addEventListener('click', () => setHow(!howIsOpen()));
+howClose.addEventListener('click', () => setHow(false));
+document.getElementById('help-button').addEventListener('click', () => setHow(!howIsOpen()));
+
+// A press anywhere else dismisses it, the way a sheet should.
+document.addEventListener('pointerdown', (event) => {
+  if (!howIsOpen()) return;
+  if (event.target.closest('#how-panel, #how-toggle, #help-button')) return;
+  setHow(false);
 });
 
 document.getElementById('result-close').addEventListener('click', () => sheet.close());
