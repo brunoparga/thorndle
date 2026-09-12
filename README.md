@@ -30,22 +30,26 @@ next to `h` is therefore a claim about pronunciation. It is almost always the
 wrong one: see [The THYME problem](#the-thyme-problem).
 
 Which letter a word needs is a matter of sound, not spelling, which is why the
-sentence at the top of the page shows all four things `th` can do at once.
+tagline at the top of the page shows all four things `th` can do at once —
+*Ðose potholes þreaten Anthony*. Half the time it is one of the written ones;
+the other half it is generated from a small bank of words, one for each kind of
+th, in a fixed frame: *Ðeir goatherds þwack Goethe*.
 
 ## Playing
 
-Seven guesses for a five-letter word. Green is right letter, right place; gold
+Six guesses for a five-letter word. Green is right letter, right place; gold
 is right letter, wrong place; black is not in the word; grey keys are ones you
-have not tried. The þ and ð keys keep a violet ring in every state, so
-"special" never reads as a score.
+have not tried. The þ and ð keys are violet in every state, letter and ring
+alike, so "special" never reads as a score — and the **þ** button in the top
+bar turns all of that off, for anyone who no longer needs the reminder.
 
 Edh sits in the top row between T and Y, thorn in the middle row between F and
 G, so each row gains a key rather than displacing one. On a physical keyboard,
-`[` types **þ** and `]` types **ð** — the page says so next to each letter (and
-if your layout can produce þ or ð directly, those work too).
+`[` types **þ** and `]` types **ð** — the note under the board says so, until
+you dismiss it (and if your layout can produce þ or ð directly, those work too).
 
-A new word every day at local midnight. Progress, statistics and the light or
-dark theme are kept in `localStorage`; nothing leaves the browser.
+A new word every day at local midnight. Progress, statistics, the theme and the
+other switches are kept in `localStorage`; nothing leaves the browser.
 
 ## Layout
 
@@ -101,6 +105,7 @@ mkdir -p /tmp/thorndle-corpora && cd /tmp/thorndle-corpora
 curl -O https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict
 curl -o en_freq.txt https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_full.txt
 curl -o wordle_all.txt https://raw.githubusercontent.com/tabatkins/wordle-list/main/words
+curl -o wordle_answers.txt https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/wordle-answers-alphabetical.txt
 cd -
 THORNDLE_DATA=/tmp/thorndle-corpora node tools/build-words.mjs
 ```
@@ -117,11 +122,19 @@ answer of the day, so nobody loses to ÞROVE or ZIÐER. `KEEP_AS_ANSWER` lets a
 word through anyway when it earns it: SEEÐE for being the only answer with three
 E's, DIÐER for being a good word.
 
-Rather than let them turn up at their natural rate of roughly once a month, the
-schedule interleaves them so **one answer in four** turns on a th. That gives
-444 daily puzzles — about fifteen months from the epoch in
-`tools/build-words.mjs` — after which the sequence repeats. Re-run the build
-with a later epoch to reshuffle.
+The plain answers are drawn from Wordle's own curated answer list — the most
+common 333 of it — rather than from the wider guess list. Wordle's editors keep
+plurals and simple past tenses out of the answers, and a frequency count cannot
+make that judgement: left to itself it served up PLAYS, TELLS and GONNA.
+
+Rather than let th words turn up at their natural rate of roughly once a month,
+the answer pool is built so that **one in four** turns on a th. The two pools
+are then shuffled together in a single draw, so which days those are is not
+something anyone can predict — a fixed interleave would have put one on every
+fourth day like clockwork. The only shape imposed is that no run of plain words
+goes past ten days. That gives 444 daily puzzles — about fifteen months from the
+epoch in `tools/build-words.mjs` — after which the sequence repeats. Re-run the
+build with a later epoch to reshuffle.
 
 ## The THYME problem
 
@@ -166,6 +179,7 @@ GitHub Pages, served straight from the branch — there is nothing to compile.
 
 Word list from [CMUdict](https://github.com/cmusphinx/cmudict) (BSD-style
 licence), the [OpenSubtitles frequency
-lists](https://github.com/hermitdave/FrequencyWords) (CC-BY-SA 4.0) and
-[tabatkins/wordle-list](https://github.com/tabatkins/wordle-list). The game it
-is a variation on is, of course, Josh Wardle's Wordle.
+lists](https://github.com/hermitdave/FrequencyWords) (CC-BY-SA 4.0),
+[tabatkins/wordle-list](https://github.com/tabatkins/wordle-list) and Wordle's
+original answer list. The game it is a variation on is, of course, Josh
+Wardle's Wordle.

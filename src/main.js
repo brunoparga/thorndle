@@ -2,7 +2,7 @@
 
 import { ANSWERS, GUESSES, EPOCH } from './words.js';
 
-const ROWS = 7;
+const ROWS = 6;
 const COLS = 5;
 const THORN = 'þ';
 const EDH = 'ð';
@@ -27,20 +27,40 @@ const KEY_ALIASES = { '[': THORN, ']': EDH };
 const LETTER_NAMES = { [THORN]: 'thorn', [EDH]: 'edh' };
 
 /*
-  One sentence, four th's, four different jobs. It is the fastest way to show
-  that the split the game turns on is about sound and not about spelling.
+  The tagline. The fixed ones are sentences in which every th does something
+  different -- thorn, edh, a plain t, and a t and h that merely meet -- so the
+  split the game turns on is visible before the rules are read. Thorn and edh
+  are written as themselves -- except in the last one, whose whole point is
+  that English spelling makes you guess.
 */
-const SHIBBOLETHS = [
-  [['Those', 'edh'], ['potholes', 'split'], ['threaten', 'thorn'], ['Anthony', 'tee']],
-  [['Neither', 'edh'], ['hothead', 'split'], ['thanked', 'thorn'], ['Thomas', 'tee']],
+const TAGLINES = [
+  'Ðose potholes þreaten Anthony',
+  'Neiðer hothead þanked Thomas',
+  'English spelling is hard; it can be learned throughout through tough thorough thought, though.',
 ];
 
-const KIND_LABELS = {
-  edh: EDH,
-  thorn: THORN,
-  tee: 'th',   // Anthony: a plain /t/ with a silent h
-  split: 'th', // potholes: t and h meeting across a seam
+/*
+  The generated ones follow one frame -- <edh word> <t·h noun> <thorn verb>
+  <plain-t name> -- with a plural subject so the verb needs no agreement.
+*/
+const TAGLINE_PARTS = {
+  edh: ['Ðose', 'Ðese', 'Ðeir', 'Oðer'],
+  seam: ['potholes', 'hotheads', 'anthills', 'lighthouses', 'outhouses', 'penthouses',
+         'courthouses', 'foothills', 'goatherds', 'boathouses', 'hothouses', 'guesthouses',
+         'knighthoods', 'potholders', 'fatheads', 'nuthatches', 'sweethearts'],
+  thorn: ['þreaten', 'þank', 'þrill', 'þwart', 'þrash', 'þump', 'þrottle', 'þwack'],
+  tee: ['Anthony', 'Thomas', 'Esther', 'Thompson', 'Beethoven', 'Goethe', 'Thailand'],
 };
+
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+function generateTagline() {
+  const { edh, seam, thorn, tee } = TAGLINE_PARTS;
+  return `${pick(edh)} ${pick(seam)} ${pick(thorn)} ${pick(tee)}`;
+}
+
+/** Half the time a written one, half the time a fresh one. */
+const chooseTagline = () => (Math.random() < 0.5 ? pick(TAGLINES) : generateTagline());
 
 const isSpecial = (letter) => letter === THORN || letter === EDH;
 const letters = (word) => [...word];
@@ -70,7 +90,9 @@ function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && typeof saved === 'object') {
-      return { ...saved, stats: { ...emptyStats(), ...saved.stats } };
+      const stats = { ...emptyStats(), ...saved.stats };
+      stats.distribution = [...(stats.distribution ?? []), ...Array(ROWS).fill(0)].slice(0, ROWS);
+      return { ...saved, stats };
     }
   } catch {
     // A corrupt or unreadable store is not worth failing over; start fresh.
@@ -528,7 +550,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 // ---------------------------------------------------------- how to play ---
 
 const stage = document.getElementById('stage');
-const howToggle = document.getElementById('how-toggle');
+const howToggle = document.getElementById('help-button');
 const howPanel = document.getElementById('how-panel');
 const howClose = document.getElementById('how-close');
 
@@ -551,12 +573,11 @@ function setHow(open) {
 
 howToggle.addEventListener('click', () => setHow(!howIsOpen()));
 howClose.addEventListener('click', () => setHow(false));
-document.getElementById('help-button').addEventListener('click', () => setHow(!howIsOpen()));
 
 // A press anywhere else dismisses it, the way a sheet should.
 document.addEventListener('pointerdown', (event) => {
   if (!howIsOpen()) return;
-  if (event.target.closest('#how-panel, #how-toggle, #help-button')) return;
+  if (event.target.closest('#how-panel, #help-button')) return;
   setHow(false);
 });
 
@@ -576,36 +597,93 @@ document.getElementById('share-button').addEventListener('click', async () => {
   }
 });
 
-// ---------------------------------------------------------- shibboleth ---
+// ------------------------------------------------------- tagline, primer ---
 
-function buildShibboleth() {
-  const line = document.getElementById('shibboleth-line');
-  const key = document.getElementById('shibboleth-key');
-  const sentence = SHIBBOLETHS[game.day % SHIBBOLETHS.length];
-
-  sentence.forEach(([word, kind], i) => {
-    const at = word.toLowerCase().indexOf('th');
-    const span = document.createElement('span');
-    span.className = `th th--${kind}`;
-    span.textContent = word.slice(at, at + 2);
-
-    if (i) line.append(' ');
-    line.append(word.slice(0, at), span, word.slice(at + 2));
-
-    const item = document.createElement('li');
-    if (kind === 'thorn' || kind === 'edh') item.className = 'is-letter';
-    const symbol = document.createElement('b');
-    symbol.textContent = KIND_LABELS[kind];
-    item.append(symbol, ` ${word.toLowerCase()}`);
-    key.append(item);
-  });
+/** Append text to `host`, with every þ and ð wrapped so it can be tinted. */
+function appendRunes(host, text) {
+  for (const piece of text.split(/([þðÞÐ])/)) {
+    if (!piece) continue;
+    if (/^[þðÞÐ]$/.test(piece)) {
+      host.append(Object.assign(document.createElement('span'), { className: 'rune', textContent: piece }));
+    } else {
+      host.append(piece);
+    }
+  }
 }
+
+/** Render a tagline into `host`, replacing whatever was there. */
+function renderTagline(text, host) {
+  host.textContent = '';
+  appendRunes(host, text);
+}
+
+const primer = document.getElementById('primer');
+const PRIMER_KEY = 'thorndle.primer';
+
+function setPrimer(shown) {
+  primer.hidden = !shown;
+  document.getElementById('primer-stub').hidden = shown;
+  try {
+    localStorage.setItem(PRIMER_KEY, shown ? 'shown' : 'hidden');
+  } catch {
+    // Then it comes back next visit, which is no disaster.
+  }
+}
+
+document.getElementById('primer-hide').addEventListener('click', () => setPrimer(false));
+document.getElementById('primer-restore').addEventListener('click', () => setPrimer(true));
+
+function buildPrimer() {
+  appendRunes(document.getElementById('primer-text'), 'Boþ ðese letters are used like ðis — noþing to it.');
+  let shown = true;
+  try {
+    shown = localStorage.getItem(PRIMER_KEY) !== 'hidden';
+  } catch {
+    // Unreadable storage: show it, the safe default.
+  }
+  primer.hidden = !shown;
+  document.getElementById('primer-stub').hidden = shown;
+}
+
+// ----------------------------------------------------------- highlights ---
+
+/*
+  The violet on thorn and edh -- keys, tiles, wordmark, prose -- is a single
+  switch. Off, the two letters look like any other, which some players prefer
+  once they no longer need the reminder.
+*/
+function applyRunes(on) {
+  if (on) delete document.documentElement.dataset.runes;
+  else document.documentElement.dataset.runes = 'off';
+  const button = document.getElementById('runes-button');
+  button.setAttribute('aria-pressed', String(on));
+  button.setAttribute('aria-label', on ? 'Stop highlighting thorn and edh' : 'Highlight thorn and edh');
+}
+
+let runes = true;
+try {
+  runes = localStorage.getItem('thorndle.runes') !== 'off';
+} catch {
+  // Unreadable storage: highlights on, the default.
+}
+applyRunes(runes);
+
+document.getElementById('runes-button').addEventListener('click', () => {
+  runes = !runes;
+  applyRunes(runes);
+  try {
+    localStorage.setItem('thorndle.runes', runes ? 'on' : 'off');
+  } catch {
+    // The choice holds for this visit only.
+  }
+});
 
 // ------------------------------------------------------------------ boot ---
 
 buildBoard();
 buildKeyboard();
-buildShibboleth();
+renderTagline(chooseTagline(), document.getElementById('tagline'));
+buildPrimer();
 render();
 
 if (game.status !== 'playing') showResult();

@@ -21,6 +21,7 @@
 //   cmudict.dict    https://github.com/cmusphinx/cmudict
 //   en_freq.txt     https://github.com/hermitdave/FrequencyWords (OpenSubtitles 2018)
 //   wordle_all.txt  https://github.com/tabatkins/wordle-list
+//   wordle_answers.txt  Wordle's original curated answer list (cfreshman's gist)
 //   plus /usr/share/dict/{american,british}-english
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -70,6 +71,10 @@ const EXTRA = ['gothic', 'themed', 'mouthy', 'thusly', 'empath', 'thingy', 'meth
 
 // Playable as guesses, never chosen as the answer of the day.
 const NOT_AN_ANSWER = /^(fucks?|shits?|cunts?|whores?|bitch|niggas?|dicks?|twats?|pussy|semen|penis|rapes?|raped|kikes?|spics?|dykes?|slurs?)$/;
+
+// Spellings of speech rather than words: common enough to clear the frequency
+// floor, and not something anyone should have to guess.
+const NOT_A_WORD = new Set(['gonna', 'wanna', 'gotta', 'kinda', 'sorta', 'dunno', 'lemme', 'gimme', 'outta']);
 
 const ANSWERS_PER_SPECIAL = 4; // one þ/ð answer in every four days
 const EPOCH = '2026-09-06';    // day 0 of the daily puzzle
@@ -171,6 +176,7 @@ const isSpecial = (word) => word.includes(THORN) || word.includes(EDH);
 const prons = loadCmudict();
 const freq = loadFrequencies();
 const wordleWords = new Set(loadWords(join(DATA, 'wordle_all.txt')));
+const wordleAnswers = new Set(loadWords(join(DATA, 'wordle_answers.txt')));
 const dictionary = new Set([
   ...loadWords('/usr/share/dict/american-english'),
   ...loadWords('/usr/share/dict/british-english'),
@@ -233,6 +239,7 @@ const eligible = (word, entry, minFreq) =>
   !entry.ambiguous &&
   (entry.freq >= minFreq || KEEP_AS_ANSWER.has(entry.source)) &&
   !NOT_AN_ANSWER.test(word) &&
+  !NOT_A_WORD.has(word) &&
   dictionary.has(entry.source);
 
 const byFrequency = (a, b) => b[1].freq - a[1].freq || a[0].localeCompare(b[0]);
@@ -244,9 +251,11 @@ const special = entries
   .sort(byFrequency)
   .map(([w]) => w);
 
-// Ordinary answers are the most common plain words, sized to hit the ratio.
+// Ordinary answers come from Wordle's own curated list, which has no plurals
+// and no simple past tenses in it -- judgement a frequency count cannot make,
+// as PLAYS, TELLS and GONNA showed. The most common of them, sized to the ratio.
 const ordinary = entries
-  .filter(([w, e]) => !teaches(w) && wordleWords.has(w) && eligible(w, e, 1000))
+  .filter(([w, e]) => !teaches(w) && wordleAnswers.has(w) && eligible(w, e, 1000))
   .sort(byFrequency)
   .slice(0, special.length * (ANSWERS_PER_SPECIAL - 1))
   .map(([w]) => w);
@@ -268,17 +277,22 @@ function shuffled(list, seed) {
   return out;
 }
 
-// Interleave so a þ/ð word lands every fourth day instead of every fortieth.
-const specialQueue = shuffled(special, 20260906);
-const ordinaryQueue = shuffled(ordinary, 19980731);
-const schedule = [];
-let s = 0;
-let o = 0;
-while (s < specialQueue.length && o < ordinaryQueue.length) {
-  schedule.push(specialQueue[s++]);
-  for (let i = 1; i < ANSWERS_PER_SPECIAL && o < ordinaryQueue.length; i++) {
-    schedule.push(ordinaryQueue[o++]);
-  }
+/*
+  One shuffle of both pools together, so that which days get a th word is not
+  something anyone can work out -- a fixed interleave would have put one on
+  every fourth day like clockwork. The only shape imposed is that no stretch
+  of plain words runs longer than MAX_DROUGHT; a draw that does is thrown away
+  and the next seed tried. That rules out so few sequences that knowing about
+  it tells you nothing useful about tomorrow.
+*/
+const MAX_DROUGHT = 10;
+const longestDrought = (list) => list.reduce(([run, best], w) =>
+  teaches(w) ? [0, best] : [run + 1, Math.max(best, run + 1)], [0, 0])[1];
+
+let schedule;
+for (let seed = 20260906; ; seed++) {
+  schedule = shuffled([...special, ...ordinary], seed);
+  if (longestDrought(schedule) <= MAX_DROUGHT) break;
 }
 
 // ------------------------------------------------------------------ emit ---

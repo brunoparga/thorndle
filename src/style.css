@@ -34,6 +34,13 @@
   --violet-pale: #c9b3ff;
   --violet-deep: #250645;
 
+  /* A quieter violet for þ and ð inside prose and the tagline, where the
+     letters are being read rather than played. */
+  --rune-ink: #7b62c4;
+
+  /* The board and keyboard are sans, whatever the page is set in. */
+  --tile-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
   --radius: 5px;
   --gap: clamp(3px, 0.9vmin, 6px);
 }
@@ -52,13 +59,16 @@
   --dark-key-fg: #f2f0ea;
   --dark-key-press: #6b665d;
   --dark-absent-bg: #08080a;
-  --dark-absent-fg: #8f8a80;
-  --dark-present-bg: #cba233;
-  --dark-present-fg: #17150c;
-  --dark-correct-bg: #4b9552;
-  --dark-correct-fg: #0f1a10;
+  --dark-absent-fg: #f2f0ea;
+  /* Letters are white on every scored tile, so gold and green run a shade
+     deeper than they would with dark ink, to keep the white readable. */
+  --dark-present-bg: #b08a26;
+  --dark-present-fg: #ffffff;
+  --dark-correct-bg: #3a8243;
+  --dark-correct-fg: #ffffff;
   --dark-special: #b79bff;
   --dark-special-ink: #c4b0ff;
+  --dark-rune-ink: #a897da;
 }
 
 :root[data-theme="dark"] { color-scheme: dark; }
@@ -80,6 +90,7 @@
     --present-bg: var(--dark-present-bg); --present-fg: var(--dark-present-fg);
     --correct-bg: var(--dark-correct-bg); --correct-fg: var(--dark-correct-fg);
     --special: var(--dark-special); --special-ink: var(--dark-special-ink);
+    --rune-ink: var(--dark-rune-ink);
   }
 }
 
@@ -93,6 +104,7 @@
   --present-bg: var(--dark-present-bg); --present-fg: var(--dark-present-fg);
   --correct-bg: var(--dark-correct-bg); --correct-fg: var(--dark-correct-fg);
   --special: var(--dark-special); --special-ink: var(--dark-special-ink);
+  --rune-ink: var(--dark-rune-ink);
 }
 
 /* ----------------------------------------------------------------- base --- */
@@ -131,8 +143,9 @@ body {
   outline-offset: 2px;
 }
 
-/* Thorn and edh, wherever they appear in prose. */
+/* Thorn and edh: the strong violet on the wordmark, the quiet one in prose. */
 .special { color: var(--special-ink); }
+.rune { color: var(--rune-ink); }
 
 /* --------------------------------------------------------------- topbar --- */
 
@@ -141,9 +154,15 @@ body {
   max-width: 560px;
   padding: clamp(6px, 1.4vmin, 12px) 12px;
   display: grid;
-  grid-template-columns: 2.5rem 1fr 2.5rem;
+  grid-template-columns: 1fr auto 1fr; /* equal wings keep the wordmark centred */
   align-items: center;
   border-bottom: 1px solid var(--rule);
+}
+
+.topbar__tools {
+  justify-self: end;
+  display: flex;
+  gap: 6px;
 }
 
 .wordmark {
@@ -170,53 +189,38 @@ body {
 .icon-button:hover { color: var(--fg); border-color: var(--tile-edge-filled); }
 #theme-button { font-size: 1.05rem; line-height: 1; }
 
-/* ----------------------------------------------------------- shibboleth --- */
+/* The highlight switch is itself a thorn, shown the way the letters are. */
+.icon-button--runes { font-weight: 700; font-size: 1.1rem; }
+.icon-button--runes[aria-pressed="true"] {
+  color: var(--special-ink);
+  border-color: var(--special);
+}
 
-.shibboleth {
+/* -------------------------------------------------------------- tagline --- */
+
+.tagline {
   width: 100%;
   max-width: 560px;
+  margin: 0;
   padding: 0 12px;
   text-align: center;
-}
-
-.shibboleth__line {
-  margin: 0;
-  font-size: clamp(1rem, 4.2vmin, 1.25rem);
+  font-size: clamp(0.85rem, 3.4vmin, 1rem);
   font-style: italic;
+  line-height: 1.35;
+  text-wrap: balance;
 }
 
-/* Each "th" in the sentence is doing a different job; the underline says which. */
-.th { border-bottom: 2px solid currentColor; padding-bottom: 1px; }
-.th--thorn, .th--edh { color: var(--special-ink); font-style: normal; font-weight: 700; }
-.th--tee { color: var(--muted); border-bottom-style: dotted; }
-.th--split { color: var(--muted); border-bottom-style: dashed; }
-
-.shibboleth__key {
-  margin: 4px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px clamp(8px, 2.5vmin, 18px);
-  font-size: clamp(0.68rem, 2.7vmin, 0.8rem);
-  color: var(--muted);
-}
-
-.shibboleth__key b { font-weight: 700; }
-.shibboleth__key .is-letter b { color: var(--special-ink); }
+.tagline .rune { font-style: normal; font-weight: 700; }
 
 /* ---------------------------------------------------------------- board --- */
 
 /*
-  Board plus letter key. It is a positioning context so that "How to play" can
+  Board plus letter note. It is a positioning context so that "How to play" can
   cover exactly this much of the page and no more -- never the keyboard, and
   never the sentence above.
 */
 .stage {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -225,27 +229,38 @@ body {
 }
 
 .board-area {
-  flex: 1 1 auto;
-  min-height: 0;
   width: 100%;
   display: grid;
   place-items: center;
   padding: 0 12px;
 }
 
+/*
+  The board is a definite size worked out from the viewport, not a flex item
+  filling whatever is left: that is how Wordle keeps the column tight -- header,
+  board, keyboard, one gap each -- and lets spare height fall to the bottom of
+  the page instead of opening up around the tiles.
+
+  --chrome is everything on the page that is not the board. It only has to be
+  roughly right: too high and a little space is left at the foot of the page,
+  too low and a short window scrolls by a few pixels.
+*/
 .board {
+  --chrome: 385px;
+  --cap: 340px;                 /* 62px tiles, five across: Wordle's own */
+  --side: max(175px, min(var(--cap), (100dvh - var(--chrome)) * 5 / 6));
+  width: var(--side);
+  height: calc(var(--side) * 6 / 5);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   gap: var(--gap);
-  aspect-ratio: 5 / 7;
-  width: auto;
-  height: 100%;
-  max-height: min(64vh, 460px);
-  max-width: min(100%, 330px);
-  /* Opening "How to play" should push the page into a scroll, not flatten the
-     board into a strip. */
-  min-height: 210px;
+}
+
+/* On a phone the tiles take the whole width; height is whatever that needs. */
+@media (max-width: 520px) {
+  .board-area { padding: 0 8px; }
+  .board { --chrome: 345px; --cap: calc(100vw - 16px); }
 }
 
 @supports (container-type: size) {
@@ -258,6 +273,7 @@ body {
   border: 2px solid var(--tile-edge);
   border-radius: var(--radius);
   background: transparent;
+  font-family: var(--tile-font);
   font-size: clamp(1.3rem, 6.5vmin, 2rem);
   font-weight: 700;
   line-height: 1;
@@ -277,74 +293,61 @@ body {
 /* -------------------------------------------------------------- primer --- */
 
 .primer {
+  position: relative;
   width: 100%;
   max-width: 560px;
-  padding: 0 12px;
-}
-
-.letters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px clamp(10px, 3vmin, 22px);
-  justify-content: center;
-}
-
-.letter-card {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: clamp(0.72rem, 2.9vmin, 0.85rem);
-  color: var(--muted);
-}
-
-.letter-card__glyph {
-  font-size: clamp(1rem, 4vmin, 1.2rem);
-  font-weight: 700;
-}
-
-.letter-card__name {
-  font-variant: small-caps;
-  letter-spacing: 0.06em;
-  color: var(--fg);
-}
-
-.letter-card__gloss b { color: var(--fg); font-weight: 700; }
-
-/*
-  The brackets are the only way to type þ and ð on an ordinary keyboard, so the
-  hint stays in the open rather than inside "How to play". It is stated
-  unconditionally: a media query for a physical keyboard would be a guess, and
-  guessing wrong hides the one thing a desktop player needs to know.
-*/
-.letters__hint {
-  margin: 0;
-  flex-basis: 100%;   /* always its own centred line, never crowding a card */
+  padding: 0 32px;
   text-align: center;
   font-size: clamp(0.72rem, 2.9vmin, 0.85rem);
   color: var(--muted);
-  white-space: nowrap;
 }
 
-.letters__hint b { font-weight: 700; }
+.primer__line { margin: 0; }
+.primer__keys { white-space: nowrap; }
+.primer .rune { font-weight: 700; }
 
-.how-toggle {
-  width: 100%;
-  margin-top: 6px;
-  padding: 5px 0;
+/* If the line wraps, the separator dot is noise at a line start. */
+@media (max-width: 520px) {
+  .primer__keys { display: block; }
+  .primer__keys::before { content: none; }
+}
+
+.primer__hide {
+  position: absolute;
+  top: -2px;
+  right: 8px;
   border: none;
-  border-top: 1px solid var(--rule);
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: clamp(0.75rem, 3vmin, 0.88rem);
-  font-variant: small-caps;
-  letter-spacing: 0.06em;
-  text-align: left;
+  font-size: 1.2rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.how-toggle:hover { color: var(--fg); }
-.how-toggle__mark { font-size: 0.7em; }
+.primer__hide:hover { color: var(--fg); }
+
+/* The dismissed note's footprint: one quiet question, in the note's place. */
+.primer-stub {
+  margin: 0;
+  text-align: center;
+  line-height: 1;
+}
+
+.primer-stub__button {
+  padding: 2px 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: clamp(0.66rem, 2.6vmin, 0.75rem);
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.primer-stub__button:hover { opacity: 1; color: var(--fg); }
 
 /*
   The sheet. It is laid over the stage instead of being part of the column, so
@@ -417,7 +420,7 @@ body {
 .how__close:hover { color: var(--fg); }
 .how__body { padding-top: 10px; }
 .how__body p { margin: 0 0 0.7em; }
-:where(.how__body) b:where(:not(.swatch, .special)) { color: var(--fg); }
+:where(.how__body) b:where(:not(.swatch, .special, .rune)) { color: var(--fg); }
 
 /*
   The swatches name their own colour, so unlike the tiles they are small text
@@ -448,7 +451,7 @@ kbd {
 
 .keyboard {
   width: 100%;
-  max-width: 520px;
+  max-width: 500px;
   padding: 4px 6px clamp(6px, 1.6vmin, 14px);
   display: flex;
   flex-direction: column;
@@ -463,14 +466,14 @@ kbd {
 .key {
   flex: 1 1 0;
   min-width: 0;
-  height: clamp(38px, 6.6vh, 54px);
+  height: clamp(38px, 6.8vh, 58px);
   display: grid;
   place-items: center;
   border: none;
   border-radius: var(--radius);
   background: var(--key-bg);
   color: var(--key-fg);
-  font-family: inherit;
+  font-family: var(--tile-font);
   font-size: clamp(0.8rem, 3.4vmin, 1.05rem);
   font-weight: 700;
   text-transform: uppercase;
@@ -510,6 +513,18 @@ kbd {
 .key--special[data-state="correct"],
 .tile--special[data-state="present"],
 .tile--special[data-state="correct"] { --mark: var(--violet-deep); }
+
+/*
+  Highlights off. Thorn and edh keep their places and their names, but draw no
+  ring and take no violet anywhere: keys, tiles, wordmark, prose, tagline.
+*/
+:root[data-runes="off"] :is(.special, .rune, .link-button) { color: inherit; }
+:root[data-runes="off"] :is(.key--special, .tile--special) { box-shadow: none; }
+:root[data-runes="off"] .key--special { color: var(--key-fg); }
+:root[data-runes="off"] .tile--special { color: inherit; }
+:root[data-runes="off"] :is(.key--special, .tile--special)[data-state="absent"]  { color: var(--absent-fg); }
+:root[data-runes="off"] :is(.key--special, .tile--special)[data-state="present"] { color: var(--present-fg); }
+:root[data-runes="off"] :is(.key--special, .tile--special)[data-state="correct"] { color: var(--correct-fg); }
 
 /* ---------------------------------------------------------------- toast --- */
 
@@ -636,8 +651,9 @@ kbd {
 /* ------------------------------------------------------------ colophon --- */
 
 .colophon {
+  margin-top: auto;            /* whatever height is spare ends up above this */
   max-width: 460px;
-  padding: 0 16px 10px;
+  padding: 6px 16px 10px;
   text-align: center;
   font-size: 0.7rem;
   line-height: 1.45;
@@ -645,6 +661,8 @@ kbd {
 }
 
 .colophon p { margin: 0; }
+.colophon a { color: inherit; }
+.colophon__rights { opacity: 0.8; }
 
 /*
   The board is the only part of the page that can usefully absorb spare height,
@@ -652,17 +670,11 @@ kbd {
   little it is missed.
 */
 @media (max-height: 900px) {
-  .colophon { display: none; }
-}
-
-@media (max-height: 700px) {
-  .letter-card__gloss { display: none; }
-  /* Without their glosses the cards are short enough to share a line again. */
-  .letters__hint { flex-basis: auto; }
+  .colophon__note { display: none; }
 }
 
 @media (max-height: 620px) {
-  .shibboleth__key { display: none; }
+  .primer { display: none; }
 }
 
 /* ----------------------------------------------------------- animation --- */
