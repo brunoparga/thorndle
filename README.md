@@ -21,30 +21,25 @@ Each is one tile. That quietly rebuilds the whole dictionary:
 - `FATHER` becomes `FAÐER`, `SMOOTH` becomes `SMOOÐ`, `RHYTHM` becomes `RHYÐM`.
 
 So most of the new words are six letters long in ordinary English, and a good
-number of familiar Wordle answers are gone.
-
-A `th` that is neither sound - a plain `t`, a `t` and an `h` that merely meet,
-or silent - is not a digraph at all, and keeps both its letters. So `t` next to
-`h` is a legal spelling here, and typing it is a claim about pronunciation.
+number of familiar Wordle answers are gone. A `th` that is neither sound - a
+plain `t`, a `t` and an `h` that merely meet, or silent - keeps both letters.
 
 Which letter a word needs is a matter of sound, not spelling, which is why the
-tagline at the top of the page shows all four things `th` can do at once -
-*Ðose potholes þreaten Anthony*. Half the time it is one of the written ones;
-the other half it is generated from a small bank of words, one for each kind of
-th, in a fixed frame: *Ðeir goatherds þwack Goethe*.
+randomly-generated tagline at the top of the page shows all four things `th`
+can do at once - *Ðose potholes þreaten Anthony*.
 
 ## Playing
 
 Six guesses for a five-letter word. Green is right letter, right place; gold
 is right letter, wrong place; black is not in the word; grey keys are ones you
-have not tried. The þ and ð keys are violet in every state, letter and ring
+have not tried. The Þ and Ð keys are violet in every state, letter and ring
 alike, so "special" never reads as a score - and the **þ** button in the top
 bar turns all of that off, for anyone who no longer needs the reminder.
 
-Edh sits in the top row between T and Y, thorn in the middle row between F and
-G, so each row gains a key rather than displacing one. On a physical keyboard,
-`[` types **þ** and `]` types **ð** - the note under the board says so, until
-you dismiss it (and if your layout can produce þ or ð directly, those work too).
+Edh Ð sits in the top row between T and Y, thorn Þ in the middle row between F
+and G, so each row gains a key. On a physical keyboard, `[` types **þ** and `]`
+types **ð** - the note under the board says so, until you dismiss it (and if
+your layout can produce þ or ð directly, those work too).
 
 A new word every day at local midnight. Progress, statistics, the theme and the
 other switches are kept in `localStorage`; nothing leaves the browser.
@@ -55,7 +50,7 @@ other switches are kept in `localStorage`; nothing leaves the browser.
 index.html            the page
 src/style.css         one stylesheet, light and dark from the same tokens
 src/main.js           the game
-src/words.js          generated -- the dictionary and the answer schedule
+src/words.js          generated: the dictionary and the answer schedule
 tools/build-words.mjs builds src/words.js from public corpora
 CNAME                 custom domain for GitHub Pages
 ```
@@ -88,12 +83,11 @@ same rule:
 | word | reading |
 | --- | --- |
 | THYME | no th-sound: a plain `t`, so it plays at five letters |
-| TRUTHS, BOOTHS, CLOTHS, BERTHS | either - real speakers split, so both spellings play and neither is an answer |
-| MOUTHY | either - *mouthed* is plainly edh, but *mouthy* does not follow from it |
+| TRUTHS, BOOTHS, CLOTHS, BERTHS, MOUTHY | either - real speakers split, so both spellings play and neither is an answer |
 | THITHER | ÐIÐER or ÞIÐER - only the first th varies; the second is voiced for everyone, so ÐIÞER spells nothing |
 
 The other `-ths` plurals are settled enough to be answers on their own:
-BIRÞS, DEAÞS, DEPÞS, EARÞS, FAIÞS, MONÞS, MOUÐS, SMIÞS, TENÞS. The ones that do
+BIRÞS, DEAÞS, DEPÞS, EARÞS, FAIÞS, MONÞS, MOUÐS, SMIÞS, TENÞS. Some that do
 split speakers - *oaths*, *paths*, *baths* - collapse to four letters and leave
 the game anyway.
 
