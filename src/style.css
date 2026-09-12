@@ -210,7 +210,7 @@ body {
   text-wrap: balance;
 }
 
-.tagline .rune { font-style: normal; font-weight: 700; }
+.tagline .rune { font-weight: 700; }
 
 /* ---------------------------------------------------------------- board --- */
 
