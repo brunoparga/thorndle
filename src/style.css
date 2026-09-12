@@ -246,7 +246,7 @@ body {
   too low and a short window scrolls by a few pixels.
 */
 .board {
-  --chrome: 385px;
+  --chrome: 427px;   /* allows the long tagline its second line */
   --cap: 340px;                 /* 62px tiles, five across: Wordle's own */
   --side: max(175px, min(var(--cap), (100dvh - var(--chrome)) * 5 / 6));
   width: var(--side);
@@ -260,7 +260,7 @@ body {
 /* On a phone the tiles take the whole width; height is whatever that needs. */
 @media (max-width: 520px) {
   .board-area { padding: 0 8px; }
-  .board { --chrome: 345px; --cap: calc(100vw - 16px); }
+  .board { --chrome: 370px; --cap: calc(100vw - 16px); }
 }
 
 @supports (container-type: size) {
@@ -662,6 +662,7 @@ kbd {
 
 .colophon p { margin: 0; }
 .colophon a { color: inherit; }
+.colophon__odds { opacity: 0.8; }
 .colophon__rights { opacity: 0.8; }
 
 /*

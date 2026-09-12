@@ -34,7 +34,6 @@ const LETTER_NAMES = { [THORN]: 'thorn', [EDH]: 'edh' };
   that English spelling makes you guess.
 */
 const TAGLINES = [
-  'Ðose potholes þreaten Anthony',
   'Neiðer hothead þanked Thomas',
   'English spelling is hard; it can be learned throughout through tough thorough thought, though.',
 ];
@@ -59,8 +58,8 @@ function generateTagline() {
   return `${pick(edh)} ${pick(seam)} ${pick(thorn)} ${pick(tee)}`;
 }
 
-/** Half the time a written one, half the time a fresh one. */
-const chooseTagline = () => (Math.random() < 0.5 ? pick(TAGLINES) : generateTagline());
+/** Some of the time a written one, mostly a fresh one. */
+const chooseTagline = () => (Math.random() < 0.15 ? pick(TAGLINES) : generateTagline());
 
 const isSpecial = (letter) => letter === THORN || letter === EDH;
 const letters = (word) => [...word];
@@ -413,7 +412,7 @@ function showResult() {
   const source = sourceNote(game.answer);
   if (source) {
     const note = document.createElement('span');
-    note.textContent = ` — ${source}`;
+    note.textContent = ` - ${source}`;
     answerEl.append(note);
   }
 
@@ -634,7 +633,7 @@ document.getElementById('primer-hide').addEventListener('click', () => setPrimer
 document.getElementById('primer-restore').addEventListener('click', () => setPrimer(true));
 
 function buildPrimer() {
-  appendRunes(document.getElementById('primer-text'), 'Boþ ðese letters are used like ðis — noþing to it.');
+  appendRunes(document.getElementById('primer-text'), 'Use boþ ðese letters like ðis - noþing to it.');
   let shown = true;
   try {
     shown = localStorage.getItem(PRIMER_KEY) !== 'hidden';

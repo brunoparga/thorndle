@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Þorndle — thorn þ and edh ð in a word-guessing game</title>
+<title>Þorndle - thorn þ and edh ð in a word-guessing game</title>
 <meta name="description" content="A daily five-letter word game where the two sounds of English th get their old letters back: thorn (þ) for the unvoiced one, edh (ð) for the voiced one.">
 <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237c3aed'/%3E%3Ctext x='16' y='24' font-size='24' font-family='Georgia,serif' fill='%23fff' text-anchor='middle'%3E%C3%BE%3C/text%3E%3C/svg%3E">
 <meta property="og:title" content="Þorndle">
-<meta property="og:description" content="A daily word game with thorn (þ) and edh (ð) — two letters English lost.">
+<meta property="og:description" content="A daily word game with thorn (þ) and edh (ð) - two letters English lost.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://thorndle.brunoparga.net/">
 <link rel="canonical" href="https://thorndle.brunoparga.net/">
@@ -74,15 +74,15 @@
       <p>
         <b>Þ and ð are letters here.</b> Wherever English writes a
         <i>th</i> that is really one sound, Thorndle writes one tile. So
-        <i>worth</i> is WORÞ and too short to play, while <i>father</i> is
-        FAÐER and fits perfectly.
+        <i>worth</i> is WORÞ and too short to play, while <i>worthy</i> is
+        WORÐY and fits perfectly.
       </p>
       <p>
         Which of the two you need is a matter of sound, not spelling. Say the
         word: if you hear a buzz, it is <b class="rune">ð</b>
         (<i>mother</i>, <i>rather</i>, <i>smooth</i>); if it is a plain hiss, it
         is <b class="rune">þ</b> (<i>thanks</i>, <i>health</i>, <i>throat</i>).
-        If it is neither, as in the word "pothole", just write the word as usual.
+        If it is neither, as in the word "pothole", just write it as usual.
       </p>
       <p class="how__keys">
         On a physical keyboard, type <kbd>[</kbd> for <b class="rune">þ</b>
@@ -104,15 +104,17 @@
   <p class="sheet__answer" id="result-answer"></p>
   <dl class="stats" id="result-stats"></dl>
   <div class="distribution" id="result-distribution"></div>
-  <p class="sheet__countdown">Next word in <span id="result-countdown">—</span></p>
+  <p class="sheet__countdown">Next word in <span id="result-countdown">-</span></p>
   <button class="share-button" id="share-button" type="button">Share</button>
 </dialog>
 
 <footer class="colophon">
   <p class="colophon__note">
     Words come from CMUdict, which is why the game knows <i>smooth</i> buzzes
-    and <i>booth</i> hisses — and from a short list of corrections, because
-    it thinks <i>thyme</i> has a th sound in it.
+    and <i>booth</i> hisses - and from a short list of corrections.
+  </p>
+  <p class="colophon__odds">
+    One answer in four has a <span class="rune">þ</span> or a <span class="rune">ð</span> in it.
   </p>
   <p class="colophon__rights">
     © 2026 Bruno Parga · a variation on <a href="https://www.nytimes.com/games/wordle/index.html">Wordle</a>, by Josh Wardle
