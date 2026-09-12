@@ -33,33 +33,43 @@ const LETTER_NAMES = { [THORN]: 'thorn', [EDH]: 'edh' };
   are written as themselves -- except in the last one, whose whole point is
   that English spelling makes you guess.
 */
-const TAGLINES = [
-  'Neiðer hothead þanked Thomas',
-  'English spelling is hard; it can be learned throughout through tough thorough thought, though.',
-];
+const SPECIAL_TAGLINE =
+  'English spelling is hard; it can be learned throughout through tough thorough thought, though.';
 
 /*
-  The generated ones follow one frame -- <edh word> <t·h noun> <thorn verb>
-  <plain-t name> -- with a plural subject so the verb needs no agreement.
+  The generated ones follow one of two frames, mirror images of each other:
+
+    <edh word>   <t·h noun> <thorn verb> <plain-t name>
+    <thorn word> <t·h noun> <edh verb>   <plain-t name>
+
+  The subject is plural so the verb needs no agreement.
 */
 const TAGLINE_PARTS = {
-  edh: ['Ðose', 'Ðese', 'Ðeir', 'Oðer'],
-  seam: ['potholes', 'hotheads', 'anthills', 'lighthouses', 'outhouses', 'penthouses',
-         'courthouses', 'foothills', 'goatherds', 'boathouses', 'hothouses', 'guesthouses',
-         'knighthoods', 'potholders', 'fatheads', 'nuthatches', 'sweethearts'],
-  thorn: ['þreaten', 'þank', 'þrill', 'þwart', 'þrash', 'þump', 'þrottle', 'þwack'],
-  tee: ['Anthony', 'Thomas', 'Esther', 'Thompson', 'Beethoven', 'Goethe', 'Thailand'],
+  // Determiners and adjectives both work before a bare plural.
+  edhOpeners: ['Ðose', 'Ðese', 'Ðeir', 'Oðer', 'Leaðery', 'Feaðery', 'Moðerly',
+               'Faðerly', 'Broðerly', 'Worðy'],
+  thornOpeners: ['Þrifty', 'Þankful', 'Þoughtful', 'Þunderous', 'Þorough',
+                 'Þeatrical', 'Auþentic', 'Myþic', 'Healþy', 'Wealþy',
+                 'Youþful', 'Lengþy', 'Breaþless'],
+  seam: ['potholes', 'anthills', 'lighthouses', 'courthouses', 'foothills',
+         'boathouses', 'hothouses', 'guesthouses'],
+  // Verbs stay slapstick: whatever they do, they do it to a named person.
+  thornVerbs: ['þank', 'þrill', 'þwart', 'þump', 'þwack', 'unearþ'],
+  edhVerbs: ['cloðe', 'loaðe', 'sooðe', 'boðer', 'faðom', 'gaðer'],
+  tee: ['Anthony', 'Thomas', 'Thompson', 'Beethoven', 'Goethe'],
 };
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
 function generateTagline() {
-  const { edh, seam, thorn, tee } = TAGLINE_PARTS;
-  return `${pick(edh)} ${pick(seam)} ${pick(thorn)} ${pick(tee)}`;
+  const { edhOpeners, thornOpeners, seam, thornVerbs, edhVerbs, tee } = TAGLINE_PARTS;
+  const [opener, verb] = Math.random() < 0.5
+    ? [pick(edhOpeners), pick(thornVerbs)]
+    : [pick(thornOpeners), pick(edhVerbs)];
+  return `${opener} ${pick(seam)} ${verb} ${pick(tee)}`;
 }
 
-/** Some of the time a written one, mostly a fresh one. */
-const chooseTagline = () => (Math.random() < 0.15 ? pick(TAGLINES) : generateTagline());
+const chooseTagline = () => (Math.random() < 1 / 8 ? SPECIAL_TAGLINE : generateTagline());
 
 const isSpecial = (letter) => letter === THORN || letter === EDH;
 const letters = (word) => [...word];

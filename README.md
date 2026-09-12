@@ -6,8 +6,8 @@ Live at **<https://thorndle.brunoparga.net/>**.
 
 ## The twist
 
-English spells two different sounds with the same `th`. Old English had a
-letter for each, and Þorndle gives them back their jobs:
+English spells two different sounds with the same `th`. Old English had two
+letters with these sounds, and Þorndle gives them back their jobs:
 
 | letter | name | sound | as in |
 | --- | --- | --- | --- |
