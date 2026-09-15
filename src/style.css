@@ -143,9 +143,10 @@ body {
   outline-offset: 2px;
 }
 
-/* Thorn and edh: the strong violet on the wordmark, the quiet one in prose. */
-.special { color: var(--special-ink); }
+/* Thorn and edh in prose take the quiet violet; the wordmark's thorn is the
+   one strong violet on the page that no switch turns off. */
 .rune { color: var(--rune-ink); }
+.wordmark__thorn { color: var(--special-ink); }
 
 /* --------------------------------------------------------------- topbar --- */
 
@@ -420,7 +421,7 @@ body {
 .how__close:hover { color: var(--fg); }
 .how__body { padding-top: 10px; }
 .how__body p { margin: 0 0 0.7em; }
-:where(.how__body) b:where(:not(.swatch, .special, .rune)) { color: var(--fg); }
+:where(.how__body) b:where(:not(.swatch, .rune)) { color: var(--fg); }
 
 /*
   The swatches name their own colour, so unlike the tiles they are small text
@@ -483,6 +484,60 @@ kbd {
 }
 
 .key--wide { flex: 1.6 1 0; font-size: clamp(0.6rem, 2.4vmin, 0.75rem); letter-spacing: 0.04em; }
+
+/*
+  The Enter hint, in two parts on one 3.2s cycle, until the first guess is in.
+  Neither answers to the highlight switch: this is about the button, not the
+  letters.
+
+  The sheen: the label is painted with a gradient clipped to its own letters --
+  the key's text colour everywhere except a diagonal band of violet about a
+  letter and a half wide -- and the whole thing slides left to right. Clipped
+  to the glyphs, the band shows only where the letters are: the grey of the key
+  hides it, the letters reveal it.
+
+  The ring: the same inset ring thorn and edh wear, but it breathes -- dark,
+  then brightening to a little over half strength, then fading out again --
+  rather than reaching the full violet and staying. It runs on a cycle three
+  times the band's, so it swells and fades once for every three sweeps, and is
+  at its brightest as the first of the three crosses.
+*/
+.key--beckon { position: relative; }
+
+.key--beckon .key__label {
+  background-image: linear-gradient(105deg,
+    currentColor 0 41%, var(--special) 41% 53%, currentColor 53% 100%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: beckon-sheen 3.2s linear infinite;
+}
+
+.key--beckon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px var(--special);
+  opacity: 0;
+  pointer-events: none;
+  animation: beckon-ring 6.4s ease-in-out infinite;
+}
+
+/* The band crosses in the first two fifths, then rests off the right edge. */
+@keyframes beckon-sheen {
+  0%   { background-position: 100% 0; }
+  40%, 100% { background-position: 0% 0; }
+}
+
+/* One slow swell per three sweeps: up over the first, down over the second. */
+@keyframes beckon-ring {
+  0%   { opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
 .key:active { background: var(--key-press); }
 .key[data-state="absent"]  { background: var(--absent-bg);  color: var(--absent-fg); }
 .key[data-state="present"] { background: var(--present-bg); color: var(--present-fg); }
@@ -518,7 +573,7 @@ kbd {
   Highlights off. Thorn and edh keep their places and their names, but draw no
   ring and take no violet anywhere: keys, tiles, wordmark, prose, tagline.
 */
-:root[data-runes="off"] :is(.special, .rune, .link-button) { color: inherit; }
+:root[data-runes="off"] :is(.rune, .link-button) { color: inherit; }
 :root[data-runes="off"] :is(.key--special, .tile--special) { box-shadow: none; }
 :root[data-runes="off"] .key--special { color: var(--key-fg); }
 :root[data-runes="off"] .tile--special { color: inherit; }
@@ -707,6 +762,11 @@ kbd {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tile--pop, .tile--flip, .row--shake, .tile--win, .toast { animation: none; }
+  .tile--pop, .tile--flip, .row--shake, .tile--win, .toast,
+  .key--beckon .key__label, .key--beckon::after { animation: none; }
+  /* Without motion, hold the band in the middle of the word and the ring at
+     half strength. */
+  .key--beckon .key__label { background-position: 50% 0; }
+  .key--beckon::after { opacity: 0.4; }
   .toast { opacity: 1; }
 }

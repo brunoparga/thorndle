@@ -170,6 +170,15 @@ function score(guess, answer) {
 
 const RANK = { absent: 0, present: 1, correct: 2 };
 
+/**
+ * Someone who has never seen Wordle does not know Enter is the button that
+ * matters, so until the first guess goes in, a violet band sweeps through its
+ * letters now and then.
+ */
+function beckonEnter(on) {
+  keys.get('enter').classList.toggle('key--beckon', on);
+}
+
 /** Best-known state for each letter, across every guess so far. */
 function keyboardStates() {
   const states = new Map();
@@ -220,7 +229,10 @@ function buildKeyboard() {
 
       if (key === 'enter' || key === 'back') {
         button.className = 'key key--wide';
-        button.textContent = key === 'enter' ? 'Enter' : '⌫';
+        // Enter's label is its own element so a sheen can be painted through
+        // the letters alone, leaving the key's grey untouched.
+        if (key === 'enter') button.append(Object.assign(document.createElement('span'), { className: 'key__label', textContent: 'Enter' }));
+        else button.textContent = '⌫';
         button.setAttribute('aria-label', key === 'enter' ? 'Enter' : 'Backspace');
       } else {
         button.className = isSpecial(key) ? 'key key--special' : 'key';
@@ -334,6 +346,7 @@ function submit() {
   }
 
   game.guesses.push(guess);
+  beckonEnter(false); // the first guess proves the point
   game.current = '';
   const marks = score(guess, game.answer);
   const won = marks.every((mark) => mark === 'correct');
@@ -691,6 +704,7 @@ document.getElementById('runes-button').addEventListener('click', () => {
 
 buildBoard();
 buildKeyboard();
+beckonEnter(game.status === 'playing' && game.guesses.length === 0);
 renderTagline(chooseTagline(), document.getElementById('tagline'));
 buildPrimer();
 render();
